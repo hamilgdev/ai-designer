@@ -2,6 +2,7 @@ import { useState } from 'react'
 import parse from 'html-react-parser';
 import { Divider, Space, Tag } from 'antd';
 import { v4 as uuidv4 } from 'uuid';
+import Loading from './Loading';
 
 const API_END_POINT = 'https://xeidmk2yfm.eu-west-1.awsapprunner.com/ai/coding'
 
@@ -97,7 +98,8 @@ const templateHeader = `
 export const FormCreateTemplate = ({ 
   isOpenModal,
   handleModal,
-  handelCreateTemplate
+  handelCreateTemplate,
+  setIsLoading
 }) => {
 
   const [formValue, setFormValue] = useState({})
@@ -105,7 +107,7 @@ export const FormCreateTemplate = ({
   const handleOnsubmit = async(e) => {
     e.preventDefault()
     const htmlelement = PRESET_TEMPLATES[3].htmlElement
-
+    setIsLoading(true)
     const PROMT_MESSAGE = `${formValue.description}, tailwind, ${htmlelement} `
 
     console.log({PROMT_MESSAGE});
@@ -126,7 +128,7 @@ export const FormCreateTemplate = ({
         const data = await response.json()
         console.log(data);
         console.log(data.response);
- 
+        setIsLoading(false)
         handelCreateTemplate(data.response.content)
       }
 
@@ -208,12 +210,12 @@ function App() {
 
   const [template, setTemplate] = useState(null)
   const [htmlTemplates, setHtmlTemplates] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const [isOpenModal, setIsOpenModal] = useState(false)
 
   const handleNewTemplate = () => handleModal()
-
+  setIsLoading
   const handelCreateTemplate = (template) => {
     console.log('response', template);
 
@@ -241,6 +243,8 @@ function App() {
 
   const handleModal = () => setIsOpenModal(!isOpenModal)
 
+  const templateIsloadingStyles = !isLoading ? 'min-h-[250px]' : 'hidden'
+
   return (
     <>
       <div className="relative min-h-screen flex flex-col">
@@ -252,18 +256,25 @@ function App() {
         <main className='bg-slate-100'>
 
           {template && (
-            <div className='min-h-[250px] w-full cursor-pointer border border-2 border-dashed border-slate-400'
+            <div className={`${templateIsloadingStyles} w-full cursor-pointer border border-2 border-dashed border-slate-400`}
               onClick={handleNewTemplate}
             >
               {template.htmlElement}
             </div>
           )}
 
-          {htmlTemplates.map((template) => (
+          {isLoading  && 
+          (<div className='flex items-center justify-center'>
+            <Loading />
+          </div>)
+          }
+
+          {!isLoading && htmlTemplates.map((template) => (
             <div key={template.id} className='min-h-[250px] w-full cursor-pointer border border-2 border-dashed border-slate-400'>
               {handleTemplate(template.htmlElement)}
             </div>
           ))}
+
         </main>
 
       </div>
@@ -273,6 +284,7 @@ function App() {
         handleModal={handleModal} 
         handleNewBlockTemplate={handleNewBlockTemplate}
         handelCreateTemplate={handelCreateTemplate}
+        setIsLoading={setIsLoading}
       />
     </>
   )
